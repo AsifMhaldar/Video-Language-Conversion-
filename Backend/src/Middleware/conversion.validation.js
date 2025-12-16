@@ -1,4 +1,4 @@
-const { SUPPORTED_LANGUAGES } = require('../Utils/language');
+const { SUPPORTED_LANGUAGES } = require('../Utils/language.utils');
 
 // Validate conversion request
 const validateConversionRequest = (req, res, next) => {

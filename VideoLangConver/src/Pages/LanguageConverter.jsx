@@ -22,6 +22,9 @@ function LanguageConverter() {
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [detectedLanguage, setDetectedLanguage] = useState(null);
+  const [currentStep, setCurrentStep] = useState('');
+  const [conversionId, setConversionId] = useState(null);
+  const [pollInterval, setPollInterval] = useState(null);
 
   // Available Languages
   const languages = [
@@ -37,6 +40,10 @@ function LanguageConverter() {
     { code: 'zh', name: 'Chinese', flag: '🇨🇳' },
     { code: 'ar', name: 'Arabic', flag: '🇸🇦' },
     { code: 'hi', name: 'Hindi', flag: '🇮🇳' },
+    { code: 'bn', name: 'Bengali', flag: '🇧🇩' },
+    { code: 'te', name: 'Telugu', flag: '🇮🇳' },
+    { code: 'mr', name: 'Marathi', flag: '🇮🇳' },
+    { code: 'ta', name: 'Tamil', flag: '🇮🇳' },
   ];
 
   const handleLogout = () => {
@@ -60,6 +67,13 @@ function LanguageConverter() {
 
   useEffect(() => {
     fetchVideos();
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
   }, []);
 
   const formatFileSize = (bytes) => {
@@ -84,59 +98,37 @@ function LanguageConverter() {
     setStep(3);
     setConverting(true);
     setProgress(0);
+    setDetectedLanguage(null);
+    setCurrentStep('Starting conversion...');
 
     try {
+      console.log('Starting conversion for video:', selectedVideo._id);
+      
       // Start conversion (language will be auto-detected)
       const response = await axios.post('http://localhost:3000/api/conversions/convert', {
         videoId: selectedVideo._id,
-        targetLanguage
+        targetLanguage,
+        enableLipsync: false // Set to true if you want lip-sync
       });
+
+      console.log('Conversion response:', response.data);
 
       if (!response.data.success) {
         throw new Error(response.data.message || 'Conversion failed');
       }
 
-      const conversionId = response.data.data._id;
+      // ✅ FIXED: Access conversionId correctly from response
+      const newConversionId = response.data.data.conversionId;
       
-      // Poll for progress
-      const pollInterval = setInterval(async () => {
-        try {
-          const statusResponse = await axios.get(`http://localhost:3000/api/conversions/${conversionId}`);
-          const { progress, status, sourceLanguage } = statusResponse.data.data;
-          
-          setProgress(progress);
-          
-          if (sourceLanguage && !detectedLanguage) {
-            setDetectedLanguage(sourceLanguage);
-          }
-          
-          if (status === 'completed') {
-            clearInterval(pollInterval);
-            setConverting(false);
-            console.log('Conversion completed successfully');
-          } else if (status === 'failed') {
-            clearInterval(pollInterval);
-            setConverting(false);
-            alert('Conversion failed. Please try again.');
-            setStep(2);
-          }
-        } catch (pollError) {
-          console.error('Error polling status:', pollError);
-          clearInterval(pollInterval);
-          setConverting(false);
-          alert('Error checking conversion status');
-          setStep(2);
-        }
-      }, 2000);
+      if (!newConversionId) {
+        throw new Error('No conversion ID returned from server');
+      }
 
-      // Cleanup interval after 10 minutes (timeout)
-      setTimeout(() => {
-        clearInterval(pollInterval);
-        if (converting) {
-          setConverting(false);
-          alert('Conversion timeout. Please check status later.');
-        }
-      }, 600000);
+      setConversionId(newConversionId);
+      console.log('Conversion started with ID:', newConversionId);
+      
+      // Start polling for progress
+      startPolling(newConversionId);
 
     } catch (error) {
       console.error('Conversion error:', error);
@@ -146,13 +138,97 @@ function LanguageConverter() {
     }
   };
 
+  const startPolling = (id) => {
+    console.log('Starting polling for conversion:', id);
+    
+    // Poll every 2 seconds
+    const interval = setInterval(async () => {
+      try {
+        const statusResponse = await axios.get(`http://localhost:3000/api/conversions/${id}`);
+        
+        if (!statusResponse.data.success) {
+          console.error('Status check failed:', statusResponse.data);
+          return;
+        }
+
+        const conversionData = statusResponse.data.data;
+        console.log('Conversion status:', conversionData);
+        
+        // Update progress
+        setProgress(conversionData.progress || 0);
+        
+        // Update current step message
+        if (conversionData.currentStep) {
+          setCurrentStep(conversionData.currentStep);
+        }
+        
+        // Update detected language
+        if (conversionData.sourceLanguage && 
+            conversionData.sourceLanguage !== 'detecting...' && 
+            !detectedLanguage) {
+          setDetectedLanguage(conversionData.sourceLanguage);
+          console.log('Detected language:', conversionData.sourceLanguage);
+        }
+        
+        // Check if conversion completed
+        if (conversionData.status === 'completed') {
+          clearInterval(interval);
+          setPollInterval(null);
+          setConverting(false);
+          setProgress(100);
+          setCurrentStep('Conversion completed!');
+          console.log('✅ Conversion completed successfully');
+        } else if (conversionData.status === 'failed') {
+          clearInterval(interval);
+          setPollInterval(null);
+          setConverting(false);
+          console.error('❌ Conversion failed:', conversionData.error);
+          alert(`Conversion failed: ${conversionData.error || 'Unknown error'}`);
+          setStep(2);
+        } else if (conversionData.status === 'cancelled') {
+          clearInterval(interval);
+          setPollInterval(null);
+          setConverting(false);
+          alert('Conversion was cancelled');
+          setStep(2);
+        }
+      } catch (pollError) {
+        console.error('Error polling status:', pollError);
+        // Don't stop polling on temporary network errors
+      }
+    }, 2000);
+
+    setPollInterval(interval);
+
+    // Cleanup interval after 15 minutes (timeout)
+    setTimeout(() => {
+      if (interval) {
+        clearInterval(interval);
+        setPollInterval(null);
+        if (converting) {
+          setConverting(false);
+          alert('Conversion timeout. Please check status later.');
+          setStep(2);
+        }
+      }
+    }, 900000); // 15 minutes
+  };
+
   const resetProcess = () => {
+    // Clear polling if active
+    if (pollInterval) {
+      clearInterval(pollInterval);
+      setPollInterval(null);
+    }
+    
     setStep(1);
     setSelectedVideo(null);
     setTargetLanguage('');
     setDetectedLanguage(null);
     setProgress(0);
     setConverting(false);
+    setCurrentStep('');
+    setConversionId(null);
   };
 
   return (
@@ -203,7 +279,7 @@ function LanguageConverter() {
           <h1 className="text-3xl md:text-4xl font-bold mb-2">
             Language <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Converter</span>
           </h1>
-          <p className="text-gray-400">Convert your videos to different languages</p>
+          <p className="text-gray-400">Convert your videos to different languages with AI</p>
         </motion.div>
 
         {/* Progress Steps */}
@@ -320,7 +396,9 @@ function LanguageConverter() {
             >
               <div className="bg-white/5 rounded-2xl border border-white/10 p-6 max-w-4xl mx-auto">
                 <h2 className="text-2xl font-bold mb-4">Choose Target Language</h2>
-                <p className="text-gray-400 mb-6">The source language will be automatically detected from your video</p>
+                <p className="text-gray-400 mb-6">
+                  ✨ The source language will be automatically detected from your video
+                </p>
                 
                 {/* Selected Video Display */}
                 <div className="mb-8 p-4 bg-white/5 rounded-xl border border-white/10">
@@ -408,12 +486,23 @@ function LanguageConverter() {
                     </div>
                     <h2 className="text-2xl font-bold mb-2">Converting Video...</h2>
                     {detectedLanguage ? (
-                      <p className="text-gray-400 mb-8">
-                        Detected: {languages.find(l => l.code === detectedLanguage)?.name} → Converting to: {languages.find(l => l.code === targetLanguage)?.name}
+                      <p className="text-gray-400 mb-2">
+                        Detected: <span className="text-blue-400 font-semibold">
+                          {languages.find(l => l.code === detectedLanguage)?.name || detectedLanguage}
+                        </span> → Converting to: <span className="text-purple-400 font-semibold">
+                          {languages.find(l => l.code === targetLanguage)?.name}
+                        </span>
                       </p>
                     ) : (
-                      <p className="text-gray-400 mb-8">
+                      <p className="text-gray-400 mb-2">
                         Detecting language and converting to {languages.find(l => l.code === targetLanguage)?.name}
+                      </p>
+                    )}
+                    
+                    {/* Current Step Message */}
+                    {currentStep && (
+                      <p className="text-sm text-blue-400 mb-6">
+                        {currentStep}
                       </p>
                     )}
                     
@@ -427,12 +516,15 @@ function LanguageConverter() {
                           initial={{ width: 0 }}
                           animate={{ width: `${progress}%` }}
                           className="h-full bg-gradient-to-r from-blue-500 to-purple-600"
-                          transition={{ duration: 0.3 }}
+                          transition={{ duration: 0.5, ease: "easeInOut" }}
                         />
                       </div>
                     </div>
 
-                    <p className="text-sm text-gray-500">This may take a few minutes...</p>
+                    <div className="space-y-2 text-sm text-gray-500">
+                      <p>⏱️ This may take 5-15 minutes depending on video length</p>
+                      <p>🎯 Processing includes: transcription, translation & audio generation</p>
+                    </div>
                   </>
                 ) : (
                   <>
@@ -440,7 +532,12 @@ function LanguageConverter() {
                       <HiCheck className="text-5xl" />
                     </div>
                     <h2 className="text-2xl font-bold mb-2">Conversion Complete!</h2>
-                    <p className="text-gray-400 mb-8">Your video has been successfully converted</p>
+                    <p className="text-gray-400 mb-2">Your video has been successfully converted</p>
+                    {detectedLanguage && (
+                      <p className="text-sm text-blue-400 mb-6">
+                        {languages.find(l => l.code === detectedLanguage)?.name} → {languages.find(l => l.code === targetLanguage)?.name}
+                      </p>
+                    )}
                     
                     <div className="flex gap-4">
                       <button

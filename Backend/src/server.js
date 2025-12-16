@@ -11,6 +11,7 @@ const videoRouter = require('./Routes/video');
 const conversionRouter = require('./Routes/conversion.routes');
 const fs = require('fs');
 const path = require('path');
+const { runEnvironmentCheck } = require('./Utils/pythonExecutor');
 
 // CORS Configuration
 app.use(cors({
@@ -42,6 +43,12 @@ const InitializeConnection = async() => {
     try {
         await Promise.all([redisClient.connect()]);
         console.log("DB Connected");
+
+        // Check if environment is ready for video conversion
+        const envCheck = await runEnvironmentCheck();
+        if (!envCheck.ready) {
+            console.warn('⚠️ Video conversion environment not ready!');
+        }
 
         app.listen(process.env.PORT, () => {
             console.log(`Server is listening on ${process.env.PORT} port`);

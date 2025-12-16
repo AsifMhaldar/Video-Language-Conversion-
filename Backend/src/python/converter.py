@@ -19,8 +19,13 @@ class OnlineVideoConverter:
         """Load Whisper model for transcription"""
         if self.whisper_model is None:
             print(f"Loading Whisper model ({model_size})...", flush=True)
-            self.whisper_model = whisper.load_model(model_size)
-            print("Whisper model loaded", flush=True)
+            print("This may take a few minutes on first run (downloading ~139MB)...", flush=True)
+            try:
+                self.whisper_model = whisper.load_model(model_size, download_root=None)
+                print("Whisper model loaded successfully", flush=True)
+            except Exception as e:
+                print(f"Failed to load Whisper model: {str(e)}", flush=True)
+                raise Exception(f"Failed to load Whisper model. Please check your internet connection and try again: {str(e)}")
         
     def stream_download_video(self, video_url):
         """Stream download video to temporary file"""
@@ -73,7 +78,7 @@ class OnlineVideoConverter:
     def detect_and_transcribe(self, audio_path):
         """Detect language and transcribe audio using Whisper"""
         if self.whisper_model is None:
-            self.load_whisper_model()
+            self.load_whisper_model("tiny")  # Use tiny model for faster downloads
         
         print("Detecting language and transcribing...", flush=True)
         
@@ -291,9 +296,17 @@ def cleanup_temp_files(file_list):
 
 def main():
     """CLI interface"""
+    # Fix Windows console encoding issues
+    if sys.platform == 'win32':
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+        except:
+            pass
+    
     if len(sys.argv) < 3:
-        print("Usage: python online_converter.py <video_url> <target_language>")
-        print("Example: python online_converter.py https://example.com/video.mp4 es")
+        print("Usage: python converter.py <video_url> <target_language>")
+        print("Example: python converter.py https://example.com/video.mp4 es")
         sys.exit(1)
     
     video_url = sys.argv[1]
@@ -311,12 +324,12 @@ def main():
     
     print("\n" + "="*50, flush=True)
     if result['success']:
-        print("✅ Conversion successful!", flush=True)
+        print("[SUCCESS] Conversion successful!", flush=True)
         print(f"Detected: {result['detected_language']}", flush=True)
         print(f"Converted to: {result['target_language']}", flush=True)
         print(f"Output: {result['output_path']}", flush=True)
     else:
-        print("❌ Conversion failed!", flush=True)
+        print("[FAILED] Conversion failed!", flush=True)
         print(f"Error: {result['error']}", flush=True)
     print("="*50, flush=True)
     
