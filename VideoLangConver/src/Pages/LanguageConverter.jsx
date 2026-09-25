@@ -6,7 +6,7 @@ import {
   HiTranslate, HiCheck, HiChevronRight, HiPlay
 } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { fetchVideos } from '../api/video.api';
 import { startConversion, getConversionStatus } from '../api/conversion.api';
 import { languages } from '../constants/languages';
@@ -15,12 +15,13 @@ import { formatFileSize } from '../utils/format';
 function LanguageConverter() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // State Management
-  const [step, setStep] = useState(1); // 1: Select Video, 2: Select Target Language, 3: Processing
+  const [step, setStep] = useState(location.state?.video ? 2 : 1); // 1: Select Video, 2: Select Target Language, 3: Processing
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [selectedVideo, setSelectedVideo] = useState(location.state?.video || null);
   const [targetLanguage, setTargetLanguage] = useState('');
   const [converting, setConverting] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -52,13 +53,18 @@ function LanguageConverter() {
   useEffect(() => {
     loadVideos();
 
+    if (location.state?.video) {
+      setSelectedVideo(location.state.video);
+      setStep(2);
+    }
+
     // Cleanup polling on unmount
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
       }
     };
-  }, []);
+  }, [location.state]);
 
   const handleVideoSelect = (video) => {
     setSelectedVideo(video);

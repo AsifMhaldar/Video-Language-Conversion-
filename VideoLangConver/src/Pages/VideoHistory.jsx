@@ -188,13 +188,17 @@ function VideoHistory() {
                     <img 
                       src={video.thumbnail} 
                       alt={video.title}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.style.display = 'none';
+                        if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+                      }}
                       className="w-full h-full object-cover"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <HiVideoCamera className="text-6xl text-blue-400/50" />
-                    </div>
-                  )}
+                  ) : null}
+                  <div className={`w-full h-full ${video.thumbnail ? 'hidden' : 'flex'} items-center justify-center bg-gradient-to-br from-blue-950/60 to-purple-950/60`}>
+                    <HiVideoCamera className="text-6xl text-blue-400/50" />
+                  </div>
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                     <button
                       onClick={() => window.open(video.videoUrl, '_blank')}
@@ -226,13 +230,15 @@ function VideoHistory() {
                 </div>
 
                 {/* Content */}
-                <div className="p-4">
-                  <h3 className="font-bold text-lg mb-2 truncate">{video.title}</h3>
-                  {video.description && (
-                    <p className="text-sm text-gray-400 mb-3 line-clamp-2">{video.description}</p>
-                  )}
-                  
-                  <div className="space-y-2 text-xs text-gray-500">
+                <div className="p-4 space-y-3">
+                  <div>
+                    <h3 className="font-bold text-lg text-white mb-1 truncate">{video.title}</h3>
+                    {video.description && (
+                      <p className="text-xs text-gray-400 line-clamp-2">{video.description}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 text-xs text-gray-500 pt-1 border-t border-white/5">
                     <div className="flex items-center gap-2">
                       <HiCalendar className="text-blue-400" />
                       <span>{formatDate(video.createdAt)}</span>
@@ -240,12 +246,19 @@ function VideoHistory() {
                       <span>{formatTime(video.createdAt)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded">
+                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded text-[11px] font-mono">
                         {video.format?.toUpperCase() || 'MP4'}
                       </span>
-                      <span className="text-gray-400">{formatFileSize(video.size)}</span>
+                      <span className="text-gray-400 font-mono">{formatFileSize(video.size)}</span>
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => navigate('/language-converter', { state: { video } })}
+                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all shadow-md shadow-purple-500/20"
+                  >
+                    <span>✨ Translate / Dub Video</span>
+                  </button>
                 </div>
               </motion.div>
             ))}

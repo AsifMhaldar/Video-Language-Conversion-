@@ -23,6 +23,26 @@
 | /language-converter | LanguageConverter | 3-step conversion wizard |
 | * | Redirect to / | Catch-all |
 
+## Reusable UI Design System (`src/shared/`)
+
+Enterprise reusable component library exports:
+```javascript
+// Direct from shared:
+import { Button, Badge, Card, Modal, Input, Spinner } from '../shared';
+
+// Or from shared/components:
+import { Button, Badge, Card, Modal, Input, Spinner } from '../shared/components';
+```
+
+| Component | File | Description | Supported Variants / Props |
+|---|---|---|---|
+| **Button** | `Button.jsx` | Polymorphic button with loading spinner & icon slots | `primary`, `secondary`, `outline`, `danger`, `ghost` (sizes: `sm`, `md`, `lg`) |
+| **Badge** | `Badge.jsx` | Status tag / language format badge | `blue`, `purple`, `green`, `amber`, `red`, `neutral` (sizes: `sm`, `md`) |
+| **Card** | `Card.jsx` | Glassmorphic container with hover glow effects | `glow: blue, purple, green, amber`, subcomponents: `Card.Header`, `Card.Body`, `Card.Footer` |
+| **Modal** | `Modal.jsx` | Accessible dialog with backdrop blur & Escape listener | `maxWidth: sm, md, lg, xl, 3xl, 4xl`, `title`, `footer` slots |
+| **Input** | `Input.jsx` | Input field with prefix/suffix icons & error states | `icon`, `iconPosition`, `label`, `error`, `helperText` |
+| **Spinner** | `Spinner.jsx`| Animated glowing loader for async operations | `sizes: sm, md, lg, xl`, `colors: blue, purple, white` |
+
 Route guards are implicit: pages check `user` from useAuth() and navigate to /signin when absent.
 
 ## API Layer (src/api/)

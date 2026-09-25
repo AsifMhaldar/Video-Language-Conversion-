@@ -11,7 +11,9 @@ const { CONVERSION_STATUS } = require('../constants');
 
 const execAsync = promisify(exec);
 
-const PYTHON_SCRIPTS_DIR = path.join(__dirname, '..', 'python');
+const AI_ENGINE_DIR = process.env.AI_ENGINE_DIR || path.resolve(__dirname, '..', '..', 'ai-engine');
+const FALLBACK_PYTHON_DIR = path.join(__dirname, '..', 'python');
+const PYTHON_SCRIPTS_DIR = fs.existsSync(AI_ENGINE_DIR) ? AI_ENGINE_DIR : FALLBACK_PYTHON_DIR;
 
 const conversionStatus = new Map();
 

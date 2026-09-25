@@ -1,0 +1,16 @@
+# AI Video Dubbing & Language Conversion Engine Dependencies
+# Local Offline Speech-to-Text (No API key, No credits needed)
+openai-whisper>=20231117
+SpeechRecognition>=3.10.0
+pydub>=0.25.1
+imageio-ffmpeg>=0.4.9
+
+# Translation & TTS
+googletrans==4.0.0-rc1
+gTTS>=2.4.0
+
+# Video & Media Processing
+moviepy>=1.0.3
+numpy>=1.24.0
+python-dotenv>=1.0.0
+requests>=2.31.0

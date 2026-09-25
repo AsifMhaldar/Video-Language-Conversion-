@@ -1,0 +1,23 @@
+{
+  "name": "videolang-ai-platform",
+  "version": "1.0.0",
+  "description": "Enterprise AI Video Dubbing & Multilingual Conversion Platform",
+  "private": true,
+  "scripts": {
+    "dev:client": "npm --prefix VideoLangConver run dev",
+    "dev:server": "npm --prefix Backend run dev",
+    "build:client": "npm --prefix VideoLangConver run build",
+    "lint:client": "npm --prefix VideoLangConver run lint",
+    "install:all": "npm --prefix VideoLangConver install && npm --prefix Backend install"
+  },
+  "keywords": [
+    "ai",
+    "video-dubbing",
+    "translation",
+    "speech-to-text",
+    "text-to-speech",
+    "subtitles"
+  ],
+  "author": "Nexus Team",
+  "license": "ISC"
+}

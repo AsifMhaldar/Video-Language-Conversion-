@@ -1,0 +1,7 @@
+# AI Video Dubbing & Language Conversion Engine Dependencies
+requests>=2.31.0
+googletrans==4.0.0-rc1
+gTTS>=2.5.0
+moviepy>=1.0.3
+numpy>=1.24.0
+python-dotenv>=1.0.0
