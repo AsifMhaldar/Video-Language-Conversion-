@@ -1,11 +1,12 @@
-// src/Dashboard.jsx
+// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HiSparkles, HiVideoCamera, HiTranslate, HiDownload, HiUser, HiLogout } from 'react-icons/hi';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import VideoUpload from '../Component/VideoUpload';
-import axios from 'axios';
+import VideoUpload from '../components/VideoUpload';
+import { fetchVideos } from '../api/video.api';
+import { formatFileSize, formatRelativeDate } from '../utils/format';
 
 function Dashboard() {
   const { user, logout } = useAuth();
@@ -20,9 +21,9 @@ function Dashboard() {
   };
 
   // Fetch videos from backend
-  const fetchVideos = async () => {
+  const loadVideos = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/videos');
+      const response = await fetchVideos();
       if (response.data.success) {
         setVideos(response.data.data);
       }
@@ -34,51 +35,26 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    fetchVideos();
+    loadVideos();
   }, []);
 
   const handleUploadSuccess = (newVideo) => {
     setVideos([newVideo, ...videos]);
-    fetchVideos(); // Refresh the list
+    loadVideos(); // Refresh the list
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-    
-    if (diffHours < 1) return 'Just now';
-    if (diffHours < 24) return `${diffHours} hours ago`;
-    if (diffDays === 1) return '1 day ago';
-    return `${diffDays} days ago`;
-  };
-
-  const formatFileSize = (bytes) => {
-    if (!bytes) return 'N/A';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
+  const formatDate = (dateString) => formatRelativeDate(dateString);
 
   // Calculate real-time stats
   const totalVideos = videos.length;
   const totalSize = videos.reduce((acc, v) => acc + (v.size || 0), 0);
   const uniqueFormats = new Set(videos.map(v => v.format?.toUpperCase() || 'MP4')).size;
-  
-  const formatTotalSize = (bytes) => {
-    if (bytes === 0) return '0 MB';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
+
+  const formatTotalSize = (bytes) => formatFileSize(bytes) === 'N/A' ? '0 MB' : formatFileSize(bytes);
 
   const stats = [
     { icon: <HiVideoCamera />, label: 'Videos Uploaded', value: totalVideos.toString(), color: 'from-blue-500 to-cyan-500' },
-    { icon: <HiTranslate />, label: 'Languages', value: uniqueFormats.toString(), color: 'from-purple-500 to-pink-500', action: () => navigate('/language-converter') },
+    { icon: <HiTranslate />, label: 'Formats', value: uniqueFormats.toString(), color: 'from-purple-500 to-pink-500', action: () => navigate('/language-converter') },
     { icon: <HiDownload />, label: 'Total Size', value: formatTotalSize(totalSize), color: 'from-green-500 to-emerald-500' },
   ];
 

@@ -2,16 +2,21 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { HiSparkles, HiVideoCamera, HiUser, HiLogout, HiArrowLeft, HiTrash, HiEye, HiDownload, HiCalendar, HiClock } from 'react-icons/hi';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { fetchVideos, deleteVideoById } from '../api/video.api';
+import {
+  formatFileSize,
+  formatDateLong,
+  formatTime,
+  formatDuration
+} from '../utils/format';
 
 function VideoHistory() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedVideo, setSelectedVideo] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const handleLogout = () => {
@@ -19,9 +24,9 @@ function VideoHistory() {
     navigate('/');
   };
 
-  const fetchVideos = async () => {
+  const loadVideos = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/videos');
+      const response = await fetchVideos();
       if (response.data.success) {
         setVideos(response.data.data);
       }
@@ -33,44 +38,14 @@ function VideoHistory() {
   };
 
   useEffect(() => {
-    fetchVideos();
+    loadVideos();
   }, []);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
-  };
-
-  const formatFileSize = (bytes) => {
-    if (!bytes) return 'N/A';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
-  };
-
-  const formatDuration = (seconds) => {
-    if (!seconds) return 'N/A';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  const formatDate = (dateString) => formatDateLong(dateString);
 
   const handleDelete = async (videoId) => {
     try {
-      const response = await axios.delete(`http://localhost:3000/api/videos/${videoId}`);
+      const response = await deleteVideoById(videoId);
       if (response.data.success) {
         setVideos(videos.filter(v => v._id !== videoId));
         setDeleteConfirm(null);

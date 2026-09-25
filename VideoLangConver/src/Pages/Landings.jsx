@@ -1,10 +1,18 @@
-// src/Pages/Landings.jsx
+// src/pages/Landings.jsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { HiMenu, HiX, HiPlay, HiCheck, HiGlobe, HiLightningBolt, HiSparkles, HiMicrophone, HiDeviceMobile, HiTranslate, HiArrowRight, HiStar, HiShieldCheck, HiUsers } from "react-icons/hi";
 import { FaTwitter, FaGithub, FaDiscord } from "react-icons/fa";
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../Context/AuthContext";
+import { useAuth } from "../context/AuthContext";
+
+const particles = Array.from({ length: 20 }, () => ({
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  driftX: Math.random() * 100,
+  driftY: Math.random() * 100,
+  duration: Math.random() * 10 + 10
+}));
 
 function Landings() {
   const [isOpen, setIsOpen] = useState(false);
@@ -126,20 +134,17 @@ function Landings() {
     <div className="bg-gradient-to-b from-[#0A0A14] via-[#0F0F1A] to-[#0A0A14] text-white overflow-x-hidden">
       {/* Animated Background Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
+        {particles.map((particle, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-blue-500/30 rounded-full"
-            initial={{
-              x: Math.random() * 100 + 'vw',
-              y: Math.random() * 100 + 'vh'
-            }}
+            initial={{ x: `${particle.x}vw`, y: `${particle.y}vh` }}
             animate={{
-              x: [null, Math.random() * 100 + 'vw'],
-              y: [null, Math.random() * 100 + 'vh']
+              x: [null, `${particle.driftX}vw`],
+              y: [null, `${particle.driftY}vh`]
             }}
             transition={{
-              duration: Math.random() * 10 + 10,
+              duration: particle.duration,
               repeat: Infinity,
               ease: "linear"
             }}

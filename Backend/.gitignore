@@ -1,2 +1,7 @@
 node_modules/
 .env
+.env.local
+temp/
+uploads/
+src/python/__pycache__/
+src/python/Wav2Lip/

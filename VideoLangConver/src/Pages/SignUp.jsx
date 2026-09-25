@@ -1,4 +1,4 @@
-// src/Pages/SignUp.jsx
+// src/pages/SignUp.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -16,14 +16,23 @@ import {
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaTwitter } from 'react-icons/fa';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+
+const particles = Array.from({ length: 15 }, () => ({
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  driftX: Math.random() * 100,
+  driftY: Math.random() * 100,
+  duration: Math.random() * 15 + 15
+}));
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    firstname: '',
+    lastname: '',
     email: '',
     password: '',
     confirmPassword: '',
@@ -48,6 +57,12 @@ function SignUp() {
     setLoading(true);
     setError('');
 
+    if (!formData.firstname.trim() || !formData.lastname.trim()) {
+      setError('Please enter your first and last name');
+      setLoading(false);
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       setLoading(false);
@@ -67,7 +82,8 @@ function SignUp() {
     }
 
     const result = await register({
-      name: formData.name,
+      firstname: formData.firstname.trim(),
+      lastname: formData.lastname.trim(),
       email: formData.email,
       password: formData.password,
     });
@@ -97,20 +113,17 @@ function SignUp() {
     <div className="min-h-screen bg-gradient-to-br from-[#0A0A14] via-[#0F0F1A] to-[#0A0A14] text-white overflow-hidden">
       {/* Animated Background Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(15)].map((_, i) => (
+        {particles.map((particle, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-blue-500/20 rounded-full"
-            initial={{
-              x: Math.random() * 100 + 'vw',
-              y: Math.random() * 100 + 'vh'
-            }}
+            initial={{ x: `${particle.x}vw`, y: `${particle.y}vh` }}
             animate={{
-              x: [null, Math.random() * 100 + 'vw'],
-              y: [null, Math.random() * 100 + 'vh']
+              x: [null, `${particle.driftX}vw`],
+              y: [null, `${particle.driftY}vh`]
             }}
             transition={{
-              duration: Math.random() * 15 + 15,
+              duration: particle.duration,
               repeat: Infinity,
               ease: "linear"
             }}
@@ -211,23 +224,47 @@ function SignUp() {
 
               {/* Sign Up Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name Field */}
-                <div className="relative group">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <HiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-300"
-                      placeholder="John Doe"
-                      required
-                      disabled={loading}
-                    />
+                {/* Name Fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="relative group">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <HiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      <input
+                        type="text"
+                        name="firstname"
+                        value={formData.firstname}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-300"
+                        placeholder="John"
+                        required
+                        minLength={3}
+                        maxLength={30}
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+                  <div className="relative group">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <HiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      <input
+                        type="text"
+                        name="lastname"
+                        value={formData.lastname}
+                        onChange={handleChange}
+                        className="w-full pl-12 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all duration-300"
+                        placeholder="Doe"
+                        required
+                        minLength={3}
+                        maxLength={30}
+                        disabled={loading}
+                      />
+                    </div>
                   </div>
                 </div>
 

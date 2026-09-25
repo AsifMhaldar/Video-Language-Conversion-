@@ -1,12 +1,20 @@
-// src/Pages/SignIn.jsx
+// src/pages/SignIn.jsx
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { HiMail, HiLockClosed, HiEye, HiEyeOff, HiArrowLeft, HiSparkles, HiCheck, HiShieldCheck } from 'react-icons/hi';
 import { FcGoogle } from 'react-icons/fc';
 import { FaGithub, FaTwitter } from 'react-icons/fa';
 import { NavLink } from 'react-router-dom';
-import { useAuth } from '../Context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+
+const particles = Array.from({ length: 15 }, () => ({
+  x: Math.random() * 100,
+  y: Math.random() * 100,
+  driftX: Math.random() * 100,
+  driftY: Math.random() * 100,
+  duration: Math.random() * 15 + 15
+}));
 
 function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
@@ -47,7 +55,7 @@ function SignIn() {
     if (result.success) {
       navigate('/dashboard');
     } else {
-      setError('Invalid email or password');
+      setError(result.error || 'Invalid email or password');
     }
     
     setLoading(false);
@@ -69,20 +77,17 @@ function SignIn() {
     <div className="min-h-screen bg-gradient-to-br from-[#0A0A14] via-[#0F0F1A] to-[#0A0A14] text-white overflow-hidden">
       {/* Animated Background Particles */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        {[...Array(15)].map((_, i) => (
+        {particles.map((particle, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-blue-500/20 rounded-full"
-            initial={{
-              x: Math.random() * 100 + 'vw',
-              y: Math.random() * 100 + 'vh'
-            }}
+            initial={{ x: `${particle.x}vw`, y: `${particle.y}vh` }}
             animate={{
-              x: [null, Math.random() * 100 + 'vw'],
-              y: [null, Math.random() * 100 + 'vh']
+              x: [null, `${particle.driftX}vw`],
+              y: [null, `${particle.driftY}vh`]
             }}
             transition={{
-              duration: Math.random() * 15 + 15,
+              duration: particle.duration,
               repeat: Infinity,
               ease: "linear"
             }}

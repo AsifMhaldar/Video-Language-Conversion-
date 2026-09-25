@@ -1,4 +1,4 @@
-// Backend/src/Utils/cloudinary.js
+// Backend/src/config/cloudinary.js
 const cloudinary = require('cloudinary').v2;
 
 cloudinary.config({
@@ -6,12 +6,5 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-// Test the configuration
-// console.log('Cloudinary configured:', {
-//   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-//   api_key: process.env.CLOUDINARY_API_KEY ? 'SET' : 'NOT SET',
-//   api_secret: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'NOT SET'
-// });
 
 module.exports = cloudinary;
